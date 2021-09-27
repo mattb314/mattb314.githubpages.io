@@ -9,7 +9,7 @@
 <p>My first paragraph.</p>
 <h2>Stations</h2>
 <div id='stations'>
-Loading...
+<div>Loading...</div>
 </div>
 
 <div id='logging'>
@@ -45,8 +45,7 @@ dumb logging for mobile:
   .then(data => {
     console.log(data);
 	let strings = data['Stations'].map(stationInfo => `${stationInfo["Name"]}: ${stationInfo["Code"]}`);
-	stationElement.replaceChildren(buildList(strings));
-	throw new Exception("hewlkjlkdsjf");
+	stationElement.children[0].replaceWith(buildList(strings)); // web dev is not my forte
   })
   .catch(e => {
   	console.log(e);
