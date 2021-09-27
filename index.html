@@ -11,10 +11,14 @@
 <div id='stations'>
 Loading...
 </div>
+
+<div id='logging'>
+dumb logging for mobile:
+<div>
 <script>
   // API keys are free on https://developer.wmata.com/developer! thanks WMATA!
   var LIMITED_API_KEY = '1a92ad0c5ca045a2baa848694b59e11e';
-  var stationElement = document.querySelector('#stations');
+  var stationElement = document.getElementById('stations');
   
   
   function buildList(strings) {
@@ -26,6 +30,14 @@ Loading...
 	});
 	return list;
   }
+  
+  function dumblog(msg) {
+    let logElement = document.getElementById('logging');
+	let text = document.createElement('p');
+	text.textContent = msg;
+	logElement.appendChild(text);
+  }
+  dumblog("hello");
    
   //fetch('https://api.wmata.com/Rail.svc/json/jLines?api_key=' + LIMITED_API_KEY)
   fetch('https://api.wmata.com/Rail.svc/json/jStations?LineCode=OR&api_key=' + LIMITED_API_KEY)
@@ -34,7 +46,16 @@ Loading...
     console.log(data);
 	let strings = data['Stations'].map(stationInfo => `${stationInfo["Name"]}: ${stationInfo["Code"]}`);
 	stationElement.replaceChildren(buildList(strings));
+	throw new Exception("hewlkjlkdsjf");
+  })
+  .catch(e => {
+  	console.log(e);
+    dumblog(e);
   });
+  
+  
+  
+  
   
 </script>
 
