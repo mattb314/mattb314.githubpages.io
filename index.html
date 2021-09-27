@@ -7,6 +7,37 @@
 
 <h1>Minor changes</h1>
 <p>My first paragraph.</p>
+<h2>Stations</h2>
+<div id='stations'>
+Loading...
+</div>
+<script>
+  // API keys are free on https://developer.wmata.com/developer! thanks WMATA!
+  var LIMITED_API_KEY = '1a92ad0c5ca045a2baa848694b59e11e';
+  var stationElement = document.querySelector('#stations');
+  
+  
+  function buildList(strings) {
+    let list = document.createElement('ul');
+	strings.forEach(s => {
+	  let row = document.createElement('li');
+	  row.textContent = s;
+	  list.appendChild(row);
+	});
+	return list;
+  }
+   
+  //fetch('https://api.wmata.com/Rail.svc/json/jLines?api_key=' + LIMITED_API_KEY)
+  fetch('https://api.wmata.com/Rail.svc/json/jStations?LineCode=OR&api_key=' + LIMITED_API_KEY)
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+	let strings = data['Stations'].map(stationInfo => `${stationInfo["Name"]}: ${stationInfo["Code"]}`);
+	stationElement.replaceChildren(buildList(strings));
+  });
+  
+</script>
+
 
 </body>
 </html>
