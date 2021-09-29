@@ -4,22 +4,21 @@
 <title>Minor changes</title>
 </head>
 <body>
-
-<h1>Minor changes</h1>
-<p>My first paragraph.</p>
 <h2>Stations</h2>
 <div id='stations'>
 <div>Loading...</div>
 </div>
 
-<div id='logging'>
+<div id='logging' hidden=true>
 dumb logging for mobile:
 <div>
 <script>
   // API keys are free on https://developer.wmata.com/developer! thanks WMATA!
   var LIMITED_API_KEY = '1a92ad0c5ca045a2baa848694b59e11e';
-  var stationElement = document.getElementById('stations');
-  
+  var CLARENDON_STATION_CODE = 'K02';
+  var FOGGY_BOTTOM_STATION_CODE = 'C04';
+  var CLARENDON_NORTH_TRACK = "1";
+  var FOGGY_BOTTOM_SOUTH_TRACK = "2";
   
   function buildList(strings) {
     let list = document.createElement('ul');
@@ -38,23 +37,102 @@ dumb logging for mobile:
 	logElement.appendChild(text);
   }
   dumblog("hello");
-   
+
+  
+  function estimateToSortKey(estimate) {
+    if (estimate === 'BRD') {
+	  return -2;
+	} else if (estimate === 'ARR') {
+	  return -1;
+	}
+	var parsed = parseInt(estimate);
+	if (isNaN(parsed)) {
+	  return 0;  // honestly not sure how null/'---' should be sorted
+	} else {
+	  return parsed;
+	}
+  }
+  
+  function prettyPrintEstimate(estimate) {
+    var parsed = parseInt(estimate)
+    if (isNaN(parsed)) {
+	  return estimate ? estimate : "(no estimate)";
+	} else {
+	  return parsed === 1 ? "1 minute" : estimate + " minutes";
+	}
+  }
+     
+  function header3(text) {
+    var header = document.createElement('h3');
+	header.textContent = text;
+	return header;
+  }
+  
+  /*
+		stationInfo {
+		  displayName: string  // header name for the section
+		  locationCode: string // station code for station
+		  lines: list<string>  // array of line codes for lines
+		  track: string        // string for track number
+		}  
+   */
+  function arrivalsElement(stationInfo, arrivals) {
+    var sortedArrivals = arrivals['Trains']
+      .filter(train => train['LocationCode'] === stationInfo.locationCode)
+	  .filter(train => stationInfo.lines.includes(train['Line']))
+	  .filter(train => train['Group'] === stationInfo.track) // group ~= track number
+	  .sort((a, b) => estimateToSortKey(a['Min']) - estimateToSortKey(b['Min']));
+	  
+	var strings = sortedArrivals.map(arrival => `${arrival['Line']} to ${arrival['DestinationName']}: ${prettyPrintEstimate(arrival["Min"])}`);
+	var listElement = buildList(strings);
+	var div = document.createElement('div');
+	div.appendChild(header3(stationInfo.displayName));
+	if (sortedArrivals.length >= 1) {
+	  div.appendChild(listElement);
+	} else {
+	  div.appendChild(document.createTextNode("No trains"));
+	}
+	return div;
+  }
+  
+  function render(arrivals) {
+    var FOGGY_BOTTOM_INFO = {
+	  'displayName': "Foggy Bottom",
+      'locationCode': FOGGY_BOTTOM_STATION_CODE,
+      'lines': ['OR', 'SV'],
+      'track': FOGGY_BOTTOM_SOUTH_TRACK
+    };
+	
+	var CLARENDON_INFO = {
+	  'displayName': "Clarendon",
+      'locationCode': CLARENDON_STATION_CODE,
+      'lines': ['OR', 'SV'],
+      'track': CLARENDON_NORTH_TRACK
+	};
+	
+	var foggyList = arrivalsElement(FOGGY_BOTTOM_INFO, arrivals);
+	var clarendonList = arrivalsElement(CLARENDON_INFO, arrivals);
+	var div = document.createElement('div');
+	div.appendChild(clarendonList);
+	div.appendChild(foggyList);
+	
+    var stationElement = document.getElementById('stations');
+	stationElement.children[0].replaceWith(div);
+  }
+  
+  var requestUrl = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/' + [CLARENDON_STATION_CODE, FOGGY_BOTTOM_STATION_CODE].join(',');
+
   //fetch('https://api.wmata.com/Rail.svc/json/jLines?api_key=' + LIMITED_API_KEY)
-  fetch('https://api.wmata.com/Rail.svc/json/jStations?LineCode=OR&api_key=' + LIMITED_API_KEY)
+  fetch(requestUrl + '?api_key=' + LIMITED_API_KEY)
   .then(response => response.json())
   .then(data => {
     console.log(data);
-	let strings = data['Stations'].map(stationInfo => `${stationInfo["Name"]}: ${stationInfo["Code"]}`);
-	stationElement.children[0].replaceWith(buildList(strings)); // web dev is not my forte
+	render(data);
   })
   .catch(e => {
   	console.log(e);
     dumblog(e);
   });
-  
-  
-  
-  
   
 </script>
 
