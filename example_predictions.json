@@ -1,0 +1,136 @@
+{
+    "Trains": [
+        {
+            "Car": "8",
+            "Destination": "Largo",
+            "DestinationCode": "G05",
+            "DestinationName": "Largo Town Center",
+            "Group": "1",
+            "Line": "BL",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "ARR"
+        },
+        {
+            "Car": "8",
+            "Destination": "Vienna",
+            "DestinationCode": "K08",
+            "DestinationName": "Vienna/Fairfax-GMU",
+            "Group": "2",
+            "Line": "OR",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "1"
+        },
+        {
+            "Car": "8",
+            "Destination": "NewCrltn",
+            "DestinationCode": "D13",
+            "DestinationName": "New Carrollton",
+            "Group": "1",
+            "Line": "OR",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "3"
+        },
+        {
+            "Car": "8",
+            "Destination": "Vienna",
+            "DestinationCode": "K08",
+            "DestinationName": "Vienna/Fairfax-GMU",
+            "Group": "2",
+            "Line": "OR",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "8"
+        },
+        {
+            "Car": "8",
+            "Destination": "Wiehle",
+            "DestinationCode": "N06",
+            "DestinationName": "Wiehle-Reston East",
+            "Group": "2",
+            "Line": "SV",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "8"
+        },
+        {
+            "Car": "8",
+            "Destination": "NewCrltn",
+            "DestinationCode": "D13",
+            "DestinationName": "New Carrollton",
+            "Group": "1",
+            "Line": "OR",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "10"
+        },
+        {
+            "Car": "8",
+            "Destination": "Largo",
+            "DestinationCode": "G05",
+            "DestinationName": "Largo Town Center",
+            "Group": "1",
+            "Line": "SV",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "12"
+        },
+        {
+            "Car": "8",
+            "Destination": "Frnconia",
+            "DestinationCode": "J03",
+            "DestinationName": "Franconia-Springfield",
+            "Group": "2",
+            "Line": "BL",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "14"
+        },
+        {
+            "Car": "8",
+            "Destination": "NewCrltn",
+            "DestinationCode": "D13",
+            "DestinationName": "New Carrollton",
+            "Group": "1",
+            "Line": "OR",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "15"
+        },
+        {
+            "Car": "8",
+            "Destination": "Wiehle",
+            "DestinationCode": "N06",
+            "DestinationName": "Wiehle-Reston East",
+            "Group": "2",
+            "Line": "SV",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "15"
+        },
+        {
+            "Car": "8",
+            "Destination": "Largo",
+            "DestinationCode": "G05",
+            "DestinationName": "Largo Town Center",
+            "Group": "1",
+            "Line": "SV",
+            "LocationCode": "C04",
+            "LocationName": "Foggy Bottom-GWU",
+            "Min": "19"
+        },
+        {
+            "Car": "8",
+            "Destination": "Vienna",
+            "DestinationCode": "K08",
+            "DestinationName": "Vienna/Fairfax-GMU",
+            "Group": "2",
+            "Line": "OR",
+            "LocationCode": "K02",
+            "LocationName": "Clarendon",
+            "Min": "25"
+        }
+    ]
+}
