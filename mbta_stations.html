@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Minor changes</title>
+<title>MBTA</title>
 </head>
 <body>
 <h2>Stations</h2>
@@ -13,13 +13,13 @@
 dumb logging for mobile:
 <div>
 <script>
-  // API keys are free on https://developer.wmata.com/developer! thanks WMATA!
-  var LIMITED_API_KEY = '1a92ad0c5ca045a2baa848694b59e11e';
-  var CLARENDON_STATION_CODE = 'K02';
-  var FOGGY_BOTTOM_STATION_CODE = 'C04';
-  var CLARENDON_NORTH_TRACK = "1";
-  var FOGGY_BOTTOM_SOUTH_TRACK = "2";
+  // API key from https://api-v3.mbta.com/
+  var LIMITED_API_KEY = 'e9c480f1c5e6481e91dc79e90f2ff7b6';
+  var STATE_STREET_STOP_ID = 'place-state';
+  var EAST_DIRECTION_ID = 1;
   
+  
+  // Copy-pasted from index.html
   function buildList(strings) {
     let list = document.createElement('ul');
 	strings.forEach(s => {
@@ -68,36 +68,6 @@ dumb logging for mobile:
 	return header;
   }
   
-  /*
-		stationInfo {
-		  displayName: string  // header name for the section
-		  locationCode: string // station code for station
-		  lines: list<string>  // array of line codes for lines
-		  track: string        // string for track number
-		}
-		
-		predictionInfo [{
-		  line: string
-		  destination: string
-		  arrivalEstimateText: string
-		}...]
-   */
-  function getPredictionInfo(stationInfo, arrivals) {
-    // return a sorted array of prediction objects for the given station info
-    var sortedArrivals = arrivals['Trains']
-      .filter(train => train['LocationCode'] === stationInfo.locationCode)
-	  .filter(train => stationInfo.lines.includes(train['Line']))
-	  .filter(train => train['Group'] === stationInfo.track) // group ~= track number
-	  .sort((a, b) => estimateToSortKey(a['Min']) - estimateToSortKey(b['Min']));
-	  
-	return sortedArrivals.map(arrival => 
-	  ({
-	    'line': arrival['Line'],
-		'destination': arrival['DestinationName'],
-		'arrivalEstimateText': prettyPrintEstimate(arrival["Min"])
-	  }));
-  }
-  
   function arrivalsElement(stationInfo, predictionInfo) {	  
 	var strings = predictionInfo.map(prediction => `${prediction['line']} to ${prediction['destination']}: ${prediction['arrivalEstimateText']}`);
 	var listElement = buildList(strings);
@@ -111,35 +81,60 @@ dumb logging for mobile:
 	return div;
   }
   
+  function getMBTAPredictionInfo(stationInfo, arrivals) {
+    // map trip id to head sign
+    var trip_map = new Map(
+	  arrivals['included'].filter(included => included['type'] === 'trip')
+	    .map(trip => [trip['id'], trip['attributes']['headsign']]));
+  
+    // filter departure null
+    return arrivals['data'].map(prediction => {
+	  // countdown display rules: https://www.mbta.com/developers/v3-api/best-practices
+	  var estimate = "(no estimate)";
+	  
+	  if (prediction['attributes']['status'] !== null) {
+	    estimate = prediction['status'];
+	  }
+	  var arrivalTimestampMS = Date.parse(prediction['attributes']['arrival_time']);
+	  if (!isNaN(arrivalTimestampMS)) {
+	    var minutesAway = Math.floor((arrivalTimestampMS - Date.now()) / 60000);
+		estimate = prettyPrintEstimate(minutesAway.toString())
+	  }
+	  
+	  var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
+	
+	  return {
+	    'line': stationInfo['lines'][0],
+	    'destination': destination,
+	    'arrivalEstimateText': estimate
+	  }
+	});
+  }
+  
   function render(arrivals) {
     var FOGGY_BOTTOM_INFO = {
-	  'displayName': "Foggy Bottom",
-      'locationCode': FOGGY_BOTTOM_STATION_CODE,
-      'lines': ['OR', 'SV'],
-      'track': FOGGY_BOTTOM_SOUTH_TRACK
+	  'displayName': "State Street",
+      'locationCode': STATE_STREET_STOP_ID,
+      'lines': ['Blue line'],
+      'track': EAST_DIRECTION_ID
     };
-	
-	var CLARENDON_INFO = {
-	  'displayName': "Clarendon",
-      'locationCode': CLARENDON_STATION_CODE,
-      'lines': ['OR', 'SV'],
-      'track': CLARENDON_NORTH_TRACK
-	};
-	
-	var foggyList = arrivalsElement(FOGGY_BOTTOM_INFO, getPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
-	var clarendonList = arrivalsElement(CLARENDON_INFO, getPredictionInfo(CLARENDON_INFO, arrivals));
+		
+	var foggyList = arrivalsElement(FOGGY_BOTTOM_INFO, getMBTAPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
+	//var clarendonList = arrivalsElement(FOGGY_BOTTOM_INFO, getMBTAPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
 	var div = document.createElement('div');
-	div.appendChild(clarendonList);
+	//div.appendChild(clarendonList);
 	div.appendChild(foggyList);
 	
     var stationElement = document.getElementById('stations');
 	stationElement.children[0].replaceWith(div);
   }
   
-  var requestUrl = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/' + [CLARENDON_STATION_CODE, FOGGY_BOTTOM_STATION_CODE].join(',');
+  
+  // MAIN
+  // should this be include=trip or include=vehicle.trip
+  var requestUrl = 'https://api-v3.mbta.com/predictions?page%5Blimit%5D=4&sort=arrival_time&filter%5Bdirection_id%5D=1&filter%5Bstop%5D=place-state&filter%5Broute%5D=Blue&include=trip';
 
-  //fetch('https://api.wmata.com/Rail.svc/json/jLines?api_key=' + LIMITED_API_KEY)
-  fetch(requestUrl + '?api_key=' + LIMITED_API_KEY)
+  fetch(requestUrl + '&api_key=' + LIMITED_API_KEY)
   .then(response => response.json())
   .then(data => {
     console.log(data);
@@ -149,7 +144,10 @@ dumb logging for mobile:
   	console.log(e);
     dumblog(e);
   });
-  
+
+
+
+
 </script>
 
 
