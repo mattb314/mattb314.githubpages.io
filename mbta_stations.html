@@ -24,132 +24,132 @@ dumb logging for mobile:
   // Copy-pasted from index.html
   function buildList(strings) {
     let list = document.createElement('ul');
-	strings.forEach(s => {
-	  let row = document.createElement('li');
-	  row.textContent = s;
-	  list.appendChild(row);
-	});
-	return list;
+    strings.forEach(s => {
+      let row = document.createElement('li');
+      row.textContent = s;
+      list.appendChild(row);
+    });
+    return list;
   }
   
   function dumblog(msg) {
     let logElement = document.getElementById('logging');
-	let text = document.createElement('p');
-	text.textContent = msg;
-	logElement.appendChild(text);
+    let text = document.createElement('p');
+    text.textContent = msg;
+    logElement.appendChild(text);
   }
   dumblog("hello");
 
   
   function estimateToSortKey(estimate) {
     if (estimate === 'BRD') {
-	  return -2;
-	} else if (estimate === 'ARR') {
-	  return -1;
-	}
-	var parsed = parseInt(estimate);
-	if (isNaN(parsed)) {
-	  return 0;  // honestly not sure how null/'---' should be sorted
-	} else {
-	  return parsed;
-	}
+      return -2;
+    } else if (estimate === 'ARR') {
+      return -1;
+    }
+    var parsed = parseInt(estimate);
+    if (isNaN(parsed)) {
+      return 0;  // honestly not sure how null/'---' should be sorted
+    } else {
+      return parsed;
+    }
   }
   
   function prettyPrintEstimate(estimate) {
     var parsed = parseInt(estimate);
     if (isNaN(parsed)) {
-	  return estimate ? estimate : "(no estimate)";
-	} else {
-	  return parsed === 1 ? "1 minute" : estimate + " minutes";
-	}
+      return estimate ? estimate : "(no estimate)";
+    } else {
+      return parsed === 1 ? "1 minute" : estimate + " minutes";
+    }
   }
      
   function header3(text) {
     var header = document.createElement('h3');
-	header.textContent = text;
-	return header;
+    header.textContent = text;
+    return header;
   }
   
-  function arrivalsElement(stationInfo, predictionInfo) {	  
-	var strings = predictionInfo.map(prediction => `${prediction['line']} to ${prediction['destination']}: ${prediction['arrivalEstimateText']}`);
-	var listElement = buildList(strings);
-	var div = document.createElement('div');
-	div.appendChild(header3(stationInfo.displayName));
-	if (predictionInfo.length >= 1) {
-	  div.appendChild(listElement);
-	} else {
-	  div.appendChild(document.createTextNode("No trains"));
-	}
-	return div;
+  function arrivalsElement(stationInfo, predictionInfo) {      
+    var strings = predictionInfo.map(prediction => `${prediction['line']} to ${prediction['destination']}: ${prediction['arrivalEstimateText']}`);
+    var listElement = buildList(strings);
+    var div = document.createElement('div');
+    div.appendChild(header3(stationInfo.displayName));
+    if (predictionInfo.length >= 1) {
+      div.appendChild(listElement);
+    } else {
+      div.appendChild(document.createTextNode("No trains"));
+    }
+    return div;
   }
   
   function getMBTAPredictionInfo(stationInfo, arrivals) {
     // map trip id to head sign
     var trip_map = new Map(
-	  arrivals['included'].filter(included => included['type'] === 'trip')
-	    .map(trip => [trip['id'], trip['attributes']['headsign']]));
+      arrivals['included'].filter(included => included['type'] === 'trip')
+        .map(trip => [trip['id'], trip['attributes']['headsign']]));
   
     // filter departure null
     return arrivals['data'].filter(prediction => prediction['attributes']['departure_time'] !== null)
-	  .filter(prediction => prediction['relationships']['stop']['data']['id'] === stationInfo.locationCode)
-	  .map(prediction => {
-	    // countdown display rules: https://www.mbta.com/developers/v3-api/best-practices
-	    var estimate = "(no estimate)";
-	    
-	    if (prediction['attributes']['status'] !== null) {
-	      estimate = prediction['status'];
-	    }
-		
-		// Usually arrival time is more consistent with the familiar boards, but this is useless at bowdoin because they're all null
-		var timeToUse = prediction['attributes']['arrival_time'] || prediction['attributes']['departure_time'];
-	    var timestampMs = Date.parse(timeToUse);
-	    if (!isNaN(timestampMs)) {
-	      var minutesAway = Math.floor((timestampMs - Date.now()) / 60000);
+      .filter(prediction => prediction['relationships']['stop']['data']['id'] === stationInfo.locationCode)
+      .map(prediction => {
+        // countdown display rules: https://www.mbta.com/developers/v3-api/best-practices
+        var estimate = "(no estimate)";
+        
+        if (prediction['attributes']['status'] !== null) {
+          estimate = prediction['status'];
+        }
+        
+        // Usually arrival time is more consistent with the familiar boards, but this is useless at bowdoin because they're all null
+        var timeToUse = prediction['attributes']['arrival_time'] || prediction['attributes']['departure_time'];
+        var timestampMs = Date.parse(timeToUse);
+        if (!isNaN(timestampMs)) {
+          var minutesAway = Math.floor((timestampMs - Date.now()) / 60000);
           estimate = prettyPrintEstimate(minutesAway.toString());
-	    }
-	    
-	    var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
-	    
-	    return {
-	      'line': stationInfo['lines'][0],
-	      'destination': destination,
-	      'arrivalEstimateText': estimate
-	    };
-	  });
+        }
+        
+        var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
+        
+        return {
+          'line': stationInfo['lines'][0],
+          'destination': destination,
+          'arrivalEstimateText': estimate
+        };
+      });
   }
   
   function render(arrivals) {
     var STATE_STREET_INFO = {
-	  'displayName': "State Street",
+      'displayName': "State Street",
       'locationCode': STATE_STREET_STOP_ID,
       'lines': ['Blue line'],
       'track': EAST_DIRECTION_ID
     };
-	
-	var BOWDOIN_INFO = {
-	  'displayName': "Bowdoin",
+    
+    var BOWDOIN_INFO = {
+      'displayName': "Bowdoin",
       'locationCode': BOWDOIN_STOP_ID,
       'lines': ['Blue line'],
       'track': EAST_DIRECTION_ID
     };
-	
-	var GOVERNMENT_CENTER_INFO = {
-	  'displayName': "Government Center",
+    
+    var GOVERNMENT_CENTER_INFO = {
+      'displayName': "Government Center",
       'locationCode': GOVERNMENT_CENTER_STOP_ID,
       'lines': ['Blue line'],
       'track': EAST_DIRECTION_ID
     };
-		
-	var bowdoinList = arrivalsElement(BOWDOIN_INFO, getMBTAPredictionInfo(BOWDOIN_INFO, arrivals));
-	var stateStreetList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
-	var govCenterList = arrivalsElement(GOVERNMENT_CENTER_INFO, getMBTAPredictionInfo(GOVERNMENT_CENTER_INFO, arrivals));
-	var div = document.createElement('div');
-	div.appendChild(bowdoinList);
-	div.appendChild(govCenterList);
-	div.appendChild(stateStreetList);
-	
+        
+    var bowdoinList = arrivalsElement(BOWDOIN_INFO, getMBTAPredictionInfo(BOWDOIN_INFO, arrivals));
+    var stateStreetList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
+    var govCenterList = arrivalsElement(GOVERNMENT_CENTER_INFO, getMBTAPredictionInfo(GOVERNMENT_CENTER_INFO, arrivals));
+    var div = document.createElement('div');
+    div.appendChild(bowdoinList);
+    div.appendChild(govCenterList);
+    div.appendChild(stateStreetList);
+    
     var stationElement = document.getElementById('stations');
-	stationElement.children[0].replaceWith(div);
+    stationElement.children[0].replaceWith(div);
   }
   
   
@@ -161,10 +161,10 @@ dumb logging for mobile:
   .then(response => response.json())
   .then(data => {
     console.log(data);
-	render(data);
+    render(data);
   })
   .catch(e => {
-  	console.log(e);
+      console.log(e);
     dumblog(e);
   });
 
