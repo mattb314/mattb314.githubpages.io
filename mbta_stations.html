@@ -56,7 +56,7 @@ dumb logging for mobile:
   }
   
   function prettyPrintEstimate(estimate) {
-    var parsed = parseInt(estimate)
+    var parsed = parseInt(estimate);
     if (isNaN(parsed)) {
 	  return estimate ? estimate : "(no estimate)";
 	} else {
@@ -90,7 +90,6 @@ dumb logging for mobile:
 	    .map(trip => [trip['id'], trip['attributes']['headsign']]));
   
     // filter departure null
-	// Gotta account for null arrival times at bowdoin
     return arrivals['data'].filter(prediction => prediction['attributes']['departure_time'] !== null)
 	  .filter(prediction => prediction['relationships']['stop']['data']['id'] === stationInfo.locationCode)
 	  .map(prediction => {
@@ -100,10 +99,13 @@ dumb logging for mobile:
 	    if (prediction['attributes']['status'] !== null) {
 	      estimate = prediction['status'];
 	    }
-	    var arrivalTimestampMS = Date.parse(prediction['attributes']['arrival_time']);
-	    if (!isNaN(arrivalTimestampMS)) {
-	      var minutesAway = Math.floor((arrivalTimestampMS - Date.now()) / 60000);
-		  estimate = prettyPrintEstimate(minutesAway.toString())
+		
+		// Usually arrival time is more consistent with the familiar boards, but this is useless at bowdoin because they're all null
+		var timeToUse = prediction['attributes']['arrival_time'] || prediction['attributes']['departure_time'];
+	    var timestampMs = Date.parse(timeToUse);
+	    if (!isNaN(timestampMs)) {
+	      var minutesAway = Math.floor((timestampMs - Date.now()) / 60000);
+          estimate = prettyPrintEstimate(minutesAway.toString());
 	    }
 	    
 	    var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
@@ -112,8 +114,8 @@ dumb logging for mobile:
 	      'line': stationInfo['lines'][0],
 	      'destination': destination,
 	      'arrivalEstimateText': estimate
-	    }
-	});
+	    };
+	  });
   }
   
   function render(arrivals) {
@@ -126,7 +128,7 @@ dumb logging for mobile:
 	
 	var BOWDOIN_INFO = {
 	  'displayName': "Bowdoin",
-      'locationCode': GOVERNMENT_CENTER_STOP_ID,
+      'locationCode': BOWDOIN_STOP_ID,
       'lines': ['Blue line'],
       'track': EAST_DIRECTION_ID
     };
@@ -140,7 +142,7 @@ dumb logging for mobile:
 		
 	var bowdoinList = arrivalsElement(BOWDOIN_INFO, getMBTAPredictionInfo(BOWDOIN_INFO, arrivals));
 	var stateStreetList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
-	var govCenterList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
+	var govCenterList = arrivalsElement(GOVERNMENT_CENTER_INFO, getMBTAPredictionInfo(GOVERNMENT_CENTER_INFO, arrivals));
 	var div = document.createElement('div');
 	div.appendChild(bowdoinList);
 	div.appendChild(govCenterList);
