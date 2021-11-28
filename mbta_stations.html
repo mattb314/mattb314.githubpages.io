@@ -15,7 +15,9 @@ dumb logging for mobile:
 <script>
   // API key from https://api-v3.mbta.com/
   var LIMITED_API_KEY = 'e9c480f1c5e6481e91dc79e90f2ff7b6';
-  var STATE_STREET_STOP_ID = 'place-state';
+  var STATE_STREET_STOP_ID = '70042'; // stop id place-state, 70042
+  var GOVERNMENT_CENTER_STOP_ID = '70040'; // stop id place-gover, 70040
+  var BOWDOIN_STOP_ID = '70038'; // stop id place-bomnl, 70038
   var EAST_DIRECTION_ID = 1;
   
   
@@ -88,42 +90,61 @@ dumb logging for mobile:
 	    .map(trip => [trip['id'], trip['attributes']['headsign']]));
   
     // filter departure null
-    return arrivals['data'].map(prediction => {
-	  // countdown display rules: https://www.mbta.com/developers/v3-api/best-practices
-	  var estimate = "(no estimate)";
-	  
-	  if (prediction['attributes']['status'] !== null) {
-	    estimate = prediction['status'];
-	  }
-	  var arrivalTimestampMS = Date.parse(prediction['attributes']['arrival_time']);
-	  if (!isNaN(arrivalTimestampMS)) {
-	    var minutesAway = Math.floor((arrivalTimestampMS - Date.now()) / 60000);
-		estimate = prettyPrintEstimate(minutesAway.toString())
-	  }
-	  
-	  var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
-	
-	  return {
-	    'line': stationInfo['lines'][0],
-	    'destination': destination,
-	    'arrivalEstimateText': estimate
-	  }
+	// Gotta account for null arrival times at bowdoin
+    return arrivals['data'].filter(prediction => prediction['attributes']['departure_time'] !== null)
+	  .filter(prediction => prediction['relationships']['stop']['data']['id'] === stationInfo.locationCode)
+	  .map(prediction => {
+	    // countdown display rules: https://www.mbta.com/developers/v3-api/best-practices
+	    var estimate = "(no estimate)";
+	    
+	    if (prediction['attributes']['status'] !== null) {
+	      estimate = prediction['status'];
+	    }
+	    var arrivalTimestampMS = Date.parse(prediction['attributes']['arrival_time']);
+	    if (!isNaN(arrivalTimestampMS)) {
+	      var minutesAway = Math.floor((arrivalTimestampMS - Date.now()) / 60000);
+		  estimate = prettyPrintEstimate(minutesAway.toString())
+	    }
+	    
+	    var destination = trip_map.get(prediction['relationships']['trip']['data']['id']);
+	    
+	    return {
+	      'line': stationInfo['lines'][0],
+	      'destination': destination,
+	      'arrivalEstimateText': estimate
+	    }
 	});
   }
   
   function render(arrivals) {
-    var FOGGY_BOTTOM_INFO = {
+    var STATE_STREET_INFO = {
 	  'displayName': "State Street",
       'locationCode': STATE_STREET_STOP_ID,
       'lines': ['Blue line'],
       'track': EAST_DIRECTION_ID
     };
+	
+	var BOWDOIN_INFO = {
+	  'displayName': "Bowdoin",
+      'locationCode': GOVERNMENT_CENTER_STOP_ID,
+      'lines': ['Blue line'],
+      'track': EAST_DIRECTION_ID
+    };
+	
+	var GOVERNMENT_CENTER_INFO = {
+	  'displayName': "Government Center",
+      'locationCode': GOVERNMENT_CENTER_STOP_ID,
+      'lines': ['Blue line'],
+      'track': EAST_DIRECTION_ID
+    };
 		
-	var foggyList = arrivalsElement(FOGGY_BOTTOM_INFO, getMBTAPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
-	//var clarendonList = arrivalsElement(FOGGY_BOTTOM_INFO, getMBTAPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
+	var bowdoinList = arrivalsElement(BOWDOIN_INFO, getMBTAPredictionInfo(BOWDOIN_INFO, arrivals));
+	var stateStreetList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
+	var govCenterList = arrivalsElement(STATE_STREET_INFO, getMBTAPredictionInfo(STATE_STREET_INFO, arrivals));
 	var div = document.createElement('div');
-	//div.appendChild(clarendonList);
-	div.appendChild(foggyList);
+	div.appendChild(bowdoinList);
+	div.appendChild(govCenterList);
+	div.appendChild(stateStreetList);
 	
     var stationElement = document.getElementById('stations');
 	stationElement.children[0].replaceWith(div);
@@ -132,7 +153,7 @@ dumb logging for mobile:
   
   // MAIN
   // should this be include=trip or include=vehicle.trip
-  var requestUrl = 'https://api-v3.mbta.com/predictions?page%5Blimit%5D=4&sort=arrival_time&filter%5Bdirection_id%5D=1&filter%5Bstop%5D=place-state&filter%5Broute%5D=Blue&include=trip';
+  var requestUrl = `https://api-v3.mbta.com/predictions?page%5Blimit%5D=20&sort=departure_time&filter%5Bdirection_id%5D=1&filter%5Bstop%5D=${[STATE_STREET_STOP_ID,GOVERNMENT_CENTER_STOP_ID,BOWDOIN_STOP_ID].join(',')}&filter%5Broute%5D=Blue&include=trip`;
 
   fetch(requestUrl + '&api_key=' + LIMITED_API_KEY)
   .then(response => response.json())
