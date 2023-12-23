@@ -15,9 +15,8 @@ dumb logging for mobile:
 <script>
   // API keys are free on https://developer.wmata.com/developer! thanks WMATA!
   var LIMITED_API_KEY = '1a92ad0c5ca045a2baa848694b59e11e';
-  var CLARENDON_STATION_CODE = 'K02';
+  var VIENNA_STATION_CODE = 'K08';
   var FOGGY_BOTTOM_STATION_CODE = 'C04';
-  var CLARENDON_NORTH_TRACK = "1";
   var FOGGY_BOTTOM_SOUTH_TRACK = "2";
   
   function buildList(strings) {
@@ -73,7 +72,7 @@ dumb logging for mobile:
 		  displayName: string  // header name for the section
 		  locationCode: string // station code for station
 		  lines: list<string>  // array of line codes for lines
-		  track: string        // string for track number
+		  tracks: list<string>        // list of strings for track numbers
 		}
 		
 		predictionInfo [{
@@ -87,7 +86,7 @@ dumb logging for mobile:
     var sortedArrivals = arrivals['Trains']
       .filter(train => train['LocationCode'] === stationInfo.locationCode)
 	  .filter(train => stationInfo.lines.includes(train['Line']))
-	  .filter(train => train['Group'] === stationInfo.track) // group ~= track number
+	  .filter(train => stationInfo.tracks.includes(train['Group'])) // group ~= track number
 	  .sort((a, b) => estimateToSortKey(a['Min']) - estimateToSortKey(b['Min']));
 	  
 	return sortedArrivals.map(arrival => 
@@ -116,27 +115,27 @@ dumb logging for mobile:
 	  'displayName': "Foggy Bottom",
       'locationCode': FOGGY_BOTTOM_STATION_CODE,
       'lines': ['OR', 'SV'],
-      'track': FOGGY_BOTTOM_SOUTH_TRACK
+      'tracks': [FOGGY_BOTTOM_SOUTH_TRACK]
     };
 	
-	var CLARENDON_INFO = {
-	  'displayName': "Clarendon",
-      'locationCode': CLARENDON_STATION_CODE,
-      'lines': ['OR', 'SV'],
-      'track': CLARENDON_NORTH_TRACK
+	var VIENNA_INFO = {
+	  'displayName': "Vienna",
+      'locationCode': VIENNA_STATION_CODE,
+      'lines': ['OR'],
+      'tracks': ['1', '2']
 	};
 	
 	var foggyList = arrivalsElement(FOGGY_BOTTOM_INFO, getPredictionInfo(FOGGY_BOTTOM_INFO, arrivals));
-	var clarendonList = arrivalsElement(CLARENDON_INFO, getPredictionInfo(CLARENDON_INFO, arrivals));
+	var viennaList = arrivalsElement(VIENNA_INFO, getPredictionInfo(VIENNA_INFO, arrivals));
 	var div = document.createElement('div');
-	div.appendChild(clarendonList);
+	div.appendChild(viennaList);
 	div.appendChild(foggyList);
 	
     var stationElement = document.getElementById('stations');
 	stationElement.children[0].replaceWith(div);
   }
   
-  var requestUrl = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/' + [CLARENDON_STATION_CODE, FOGGY_BOTTOM_STATION_CODE].join(',');
+  var requestUrl = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/' + [VIENNA_STATION_CODE, FOGGY_BOTTOM_STATION_CODE].join(',');
 
   //fetch('https://api.wmata.com/Rail.svc/json/jLines?api_key=' + LIMITED_API_KEY)
   fetch(requestUrl + '?api_key=' + LIMITED_API_KEY)
